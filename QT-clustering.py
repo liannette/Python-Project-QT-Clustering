@@ -9,7 +9,7 @@
 
 
 
-import math
+import sys, math
 
 
 # Get file name and maximum diameter
