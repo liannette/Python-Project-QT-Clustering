@@ -46,19 +46,19 @@ try:
     infile.close()
     
     # Creating a dict of dict of all distances between any 2 points
-    max_distance = 0
+    globalmax_distance = 0
     distances = dict()
     for point1 in datapoints:
         distances[point1[0]] = dict()
         for point2 in datapoints:
             distance = calculate_distance(point1, point2)
             distances[point1[0]][point2[0]] = distance
-            if distance > max_distance:
+            if distance > globalmax_distance:
                 max_distance = distance
     
-    # Getting maximum diameter
+    # Getting global maximum diameter
     if '%' in max_diameter:
-        max_diameter = float(max_diameter[:-1])/100 * max_distance
+        max_diameter = float(max_diameter[:-1])/100 * globalmax_distance
     else: 
         max_diameter = float(max_diameter)
 
@@ -66,7 +66,8 @@ except IOError as error:
     sys.stderr.write("File I/O error, reason: " + str(error) + "\n")
     sys.exit(1)
    
- 
+
+''' 
 #print(distances[datapoints[0][0]])
 
 
@@ -96,7 +97,23 @@ def qt_clust(datapoints, max_diameter):
             output_cluster = cluster
     if len(output_cluster) != 1:
         return output_cluster
+'''
 
+def candidate_point(datapoints, clusterpoints):
+    """ """
+    candidate_point = None
+    min_dist = globalmax_distance
+    for datapoint in datapoints:
+        max_dist = 0						# Maximum distance between the datapoint and any clusterpoint
+        if datapoint not in clusterpoints:			# Set would be better
+            for clusterpoint in clusterpoints:
+                dist = distances[datapoint[0]][clusterpoint[0]] 
+                if dist > max_dist:
+                    max_dist = dist
+            if max_dist < min_dist:
+                min_dist = max_dist
+                candidate_point = datapoint
+    return candidate_point
 
 
 
