@@ -70,7 +70,32 @@ except IOError as error:
 #print(distances[datapoints[0][0]])
 
 
+cluster = list()
+min_distance = max_distance
 
+#Candidate clusters
+def qt_clust(datapoints, max_diameter):
+    output_cluster = list()
+    for i in range(len(datapoints))[0]:
+        cluster = list()
+        cluster += datapoints[i]
+        min_distance = max_distance
+        flag = True
+        while flag == True:
+            for j in range(len(datapoints)):
+                if datapoints[j] not in cluster:
+                    distance = float(distances[datapoints[i]][datapoints[j]])
+                    if distance < min_distance:
+                        min_distance = distance
+                        min_point = datapoints[j]
+            if min_distance <= max_diameter:        
+                cluster += min_point
+            else: 
+                flag = False   
+        if len(output_cluster) < len(cluster):
+            output_cluster = cluster
+    if len(output_cluster) != 1:
+        return output_cluster
 
 
 
