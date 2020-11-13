@@ -1,11 +1,11 @@
   #!/usr/bin/env python3
 
 
-###############################################
-# 22110 Python and Unix for Bioinformaticians #
-#           Project 9: QT-Clustering          #
-#                                             #
-############################################### 
+#####################################################
+#    22110 Python and Unix for Bioinformaticians    #
+#             Project 9: QT Clustering              #
+#        Annette Lien & Carlota Carbajo Moral       #
+##################################################### 
 
 
 # Minimum cluster size
@@ -16,8 +16,8 @@ import sys, math, re
 
 #### Functions ####
 
-def calculate_distance(point1, point2):
-    """ Calculates the distance between two data points"""
+def euclidean_distance(point1, point2):
+    """ Calculates the euclidean distance between two data points"""
     sum_of_squares = 0
     for i in range(len(point1))[1:]:
         sum_of_squares += (float(point1[i]) - float(point2[i]))**2		# ValueError possible
@@ -28,29 +28,28 @@ def candidate_point(datapoints, cluster, max_diameter):
     """ Finds the next point for a cluster"""
     point = None
     diameter = max_diameter
-    for datapoint in datapoints:
-        max_dist = 0									# Maximum distance between the datapoint and any clusterpoint
-        if datapoint not in cluster:							# Set would be better
-            # Find the clusterpoint with the biggest distance to the datapoint
-            for clusterpoint in cluster:
-                dist = distances[datapoint[0]][clusterpoint[0]] 
-                if dist > max_dist:
-                    max_dist = dist
-            if max_dist < diameter:
-                # Set as datapoint potential candidate point
-                diameter = max_dist
-                point = datapoint
+    for datapoint in datapoints.difference(cluster):
+        max_dist = 0
+        # Find the biggest distance between the datapoint and any clusterpoint
+        for clusterpoint in cluster:
+            dist = distances[datapoint[0]][clusterpoint[0]] 
+            if dist > max_dist:
+                max_dist = dist
+        if max_dist < diameter:
+            # Set datapoint as potential candidate point
+            diameter = max_dist
+            point = datapoint
     if point != None:
         return point, diameter
 
 def candidate_cluster(startpoint, datapoints, max_diameter, cluster_limit):
     """ Creates a candidate cluster"""
     diameter = 0
-    cluster = list()
-    cluster.append(startpoint)
+    cluster = set()
+    cluster.add(startpoint)
     point = candidate_point(datapoints, cluster, max_diameter)
     while point is not None:
-        cluster.append(point[0])
+        cluster.add(point[0])
         diameter = point[1]
         point = candidate_point(datapoints, cluster, max_diameter)
     if len(cluster) >= cluster_limit:
@@ -58,7 +57,7 @@ def candidate_cluster(startpoint, datapoints, max_diameter, cluster_limit):
 
 def best_cluster(datapoints, max_diameter, cluster_limit):
     """ Finds the best cluster for a list of datapoints"""
-    best_cand_cluster = list()
+    best_cand_cluster = set()
     diameter = max_diameter
     for startpoint in datapoints:
         cand_cluster = candidate_cluster(startpoint, datapoints, max_diameter, cluster_limit)
@@ -69,17 +68,8 @@ def best_cluster(datapoints, max_diameter, cluster_limit):
             elif len(cand_cluster[0]) == len(best_cand_cluster) and cand_cluster[1] < diameter:
                 best_cand_cluster = cand_cluster[0]
                 diameter = cand_cluster[1]
-    if best_cand_cluster != []:
+    if len(best_cand_cluster) != 0:
         return best_cand_cluster
-    
-def remove_datapoints(datapoints, cluster):
-    """ Removes the datapoints that have been added to a cluster """
-    i = 0
-    while i < len(datapoints):   
-        if datapoints[i] in cluster:
-            del datapoints[i]
-        else:
-            i += 1
 
 
 
@@ -105,16 +95,16 @@ while result == None:
 
     
 try:    
-    # Saving the datapoints from the input file in a list of lists
-    datapoints = list()
+    # Saving the datapoints from the input file in a set of tuples
+    datapoints = set()
     infile = open(filename_in, 'r')					# IOError possible
     column_number = None
     for line in infile:
-        point = line.split()
+        point = tuple(line.split())
         if column_number == None:
             column_number = len(point)
-        assert len(point) == column_number, 'Error: Every line has to represent a vector with the format "<name> <number> <number> <number> ...". Every vector needs to have the same size.'
-        datapoints.append(point)
+        assert len(point) == column_number, 'Error: Every line has to represent a vector with format "<name> <number> <number> <number> ...". Every vector needs to have the same size.'
+        datapoints.add(point)
     infile.close()    
     
     # Creating a dict (of dicts) of all distances between any 2 points
@@ -123,7 +113,7 @@ try:
     for point1 in datapoints:
         distances[point1[0]] = dict()
         for point2 in datapoints:
-            distance = calculate_distance(point1, point2)  		# ValueError possible
+            distance = euclidean_distance(point1, point2)  		# ValueError possible
             distances[point1[0]][point2[0]] = distance
             if distance > globalmax_distance:
                 globalmax_distance = distance
@@ -143,11 +133,11 @@ try:
     cluster = best_cluster(datapoints, max_diameter, cluster_limit)
     while cluster is not None:
         # Print cluster to output file
-        print('--> Cluster-'+str(cluster_index), file=outfile)
-        for point in cluster:
+        print('-> Cluster', cluster_index, file=outfile)
+        for point in sorted(cluster):
             print("\t".join(point), file=outfile)
         # removing cluster points from dataset
-        remove_datapoints(datapoints, cluster)
+        datapoints = datapoints.difference(cluster)
         # Get next cluster
         cluster_index += 1
         cluster = best_cluster(datapoints, max_diameter, cluster_limit)
