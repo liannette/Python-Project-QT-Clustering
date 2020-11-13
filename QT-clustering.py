@@ -71,6 +71,8 @@ except IOError as error:
     sys.stderr.write("File I/O error, reason: " + str(error) + "\n")
     sys.exit(1)
 except ValueError as error:
+    print(str(error))
+    sys.exit(1)
     
    
 
@@ -120,6 +122,15 @@ def best_candidate_cluster(datapoints, max_diameter, cluster_limit):
                 if cand_cluster[1] < best_cand_cluster[1]:
                     best_cand_cluster = cand_cluster
         return best_cand_cluster
+      
+      
+def remove_datapoints(datapoints, best_candidate_cluster):
+    i = 0
+    while i < len(datapoints):   
+        if datapoints[i] in best_candidate_cluster:
+            del datapoints[i]
+        else:
+            i += 1
 
 
 
