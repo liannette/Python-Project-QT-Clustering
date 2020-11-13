@@ -7,6 +7,9 @@
 #        Annette Lien & Carlota Carbajo Moral       #
 ##################################################### 
 
+# TO DO:
+# 1. Make a function to create the dict of the distances
+
 
 # Minimum cluster size
 cluster_limit = 1
@@ -32,15 +35,15 @@ def candidate_point(datapoints, cluster, max_diameter):
         max_dist = 0
         # Find the biggest distance between the datapoint and any clusterpoint
         for clusterpoint in cluster:
-            dist = distances[datapoint[0]][clusterpoint[0]] 
+            key = ' '.join(sorted([datapoint[0],clusterpoint[0]]))
+            dist = distances[key] 
             if dist > max_dist:
                 max_dist = dist
         if max_dist < diameter:
             # Set datapoint as potential candidate point
             diameter = max_dist
             point = datapoint
-    if point != None:
-        return point, diameter
+    return point, diameter
 
 def candidate_cluster(startpoint, datapoints, max_diameter, cluster_limit):
     """ Creates a candidate cluster"""
@@ -48,12 +51,13 @@ def candidate_cluster(startpoint, datapoints, max_diameter, cluster_limit):
     cluster = set()
     cluster.add(startpoint)
     point = candidate_point(datapoints, cluster, max_diameter)
-    while point is not None:
+    while point[0] is not None:
         cluster.add(point[0])
         diameter = point[1]
         point = candidate_point(datapoints, cluster, max_diameter)
     if len(cluster) >= cluster_limit:
         return cluster, diameter
+
 
 def best_cluster(datapoints, max_diameter, cluster_limit):
     """ Finds the best cluster for a list of datapoints"""
@@ -68,8 +72,7 @@ def best_cluster(datapoints, max_diameter, cluster_limit):
             elif len(cand_cluster[0]) == len(best_cand_cluster) and cand_cluster[1] < diameter:
                 best_cand_cluster = cand_cluster[0]
                 diameter = cand_cluster[1]
-    if len(best_cand_cluster) != 0:
-        return best_cand_cluster
+    return best_cand_cluster
 
 
 
@@ -86,37 +89,36 @@ else:
     sys.stderr.write("Usage: QT-clustering.py <filename> <maximum cluster diameter>\n")
     sys.exit(1)
 
-# Check if maximum diameter makes sense
-result = re.search(r'\d+(\.\d+)?%?', max_diameter)
-while result == None:
-    print('Error: Maximum cluster diameter must be a number or a percentage.')
-    max_diameter = input("Enter maximum cluster diameter: ")
-    result = re.search(r'\d+(\.\d+)?%?', max_diameter)
 
+try:
+    # Assert that maximum diameter makes sense
+    result = re.search(r'\d+(\.\d+)?%?', max_diameter)
+    assert result != None, 'Usage: QT-clustering.py <filename> <maximum cluster diameter>\nMaximum cluster diameter must be a number or a percentage.'
     
-try:    
     # Saving the datapoints from the input file in a set of tuples
     datapoints = set()
     infile = open(filename_in, 'r')					# IOError possible
-    column_number = None
+    vector_size = None
     for line in infile:
         point = tuple(line.split())
-        if column_number == None:
-            column_number = len(point)
-        assert len(point) == column_number, 'Error: Every line has to represent a vector with format "<name> <number> <number> <number> ...". Every vector needs to have the same size.'
         datapoints.add(point)
+        # Assert that vector size is consistent
+        if vector_size == None:
+            vector_size = len(point)-1
+        assert len(point)-1 == vector_size, 'Error: Every line has to represent a vector with format "<name> <number> <number> <number> ...". Vector size needs to be consistent.'
     infile.close()    
     
-    # Creating a dict (of dicts) of all distances between any 2 points
+    # Creating a dict of all distances between any 2 points
     globalmax_distance = 0
     distances = dict()
     for point1 in datapoints:
-        distances[point1[0]] = dict()
         for point2 in datapoints:
-            distance = euclidean_distance(point1, point2)  		# ValueError possible
-            distances[point1[0]][point2[0]] = distance
-            if distance > globalmax_distance:
-                globalmax_distance = distance
+            key = ' '.join(sorted([point1[0],point2[0]]))
+            if key not in distances:
+                distance = euclidean_distance(point1, point2)  		# ValueError possible
+                distances[key] = distance
+                if distance > globalmax_distance:
+                    globalmax_distance = distance
     
     # Getting maximum cluster diameter
     if '%' in max_diameter:
@@ -131,7 +133,7 @@ try:
     # Printing one cluster after another to the outfile
     cluster_index = 1
     cluster = best_cluster(datapoints, max_diameter, cluster_limit)
-    while cluster is not None:
+    while len(cluster) > 0:
         # Print cluster to output file
         print('-> Cluster', cluster_index, file=outfile)
         for point in sorted(cluster):
