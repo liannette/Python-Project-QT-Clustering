@@ -22,6 +22,7 @@ import sys, math, re
 def euclidean_distance(point1, point2):
     """ Calculates the euclidean distance between two data points"""
     sum_of_squares = 0
+    # First element of point1 list is the name of the point
     for i in range(len(point1))[1:]:
         sum_of_squares += (float(point1[i]) - float(point2[i]))**2		# ValueError possible
     distance = math.sqrt(sum_of_squares)
@@ -31,14 +32,18 @@ def candidate_point(datapoints, cluster, max_diameter):
     """ Finds the next point for a cluster"""
     point = None
     diameter = max_diameter
+    # Check only the points in datapoints that are not in the cluster
     for datapoint in datapoints.difference(cluster):
         max_dist = 0
         # Find the biggest distance between the datapoint and any clusterpoint
         for clusterpoint in cluster:
+            # Convert the elements of the sorted list (the smallest appears first) in a string
             key = ' '.join(sorted([datapoint[0],clusterpoint[0]]))
-            dist = distances[key] 
+            dist = distances[key]
+            # Select greatest distance between cluster points and the datapoint
             if dist > max_dist:
                 max_dist = dist
+        # Select the datapoint that is nearer to the cluster point (smallest diameter)
         if max_dist < diameter:
             # Set datapoint as potential candidate point
             diameter = max_dist
@@ -51,6 +56,7 @@ def candidate_cluster(startpoint, datapoints, max_diameter, cluster_limit):
     cluster = set()
     cluster.add(startpoint)
     point = candidate_point(datapoints, cluster, max_diameter)
+    # point[0] will be None when there are no points with a distance between them smaller than the maximum cluster diameter
     while point[0] is not None:
         cluster.add(point[0])
         diameter = point[1]
