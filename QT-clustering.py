@@ -82,6 +82,9 @@ def best_cluster(datapoints, max_diameter, cluster_limit):
 if len(sys.argv) == 1:
     filename_in = input("Enter filename: ")
     max_diameter = input("Enter maximum cluster diameter: ")
+elif len(sys.argv) == 2:
+    filename_in = sys.argv[1]
+    max_diameter = input("Enter maximum cluster diameter: ")
 elif len(sys.argv) == 3: 
     filename_in = sys.argv[1]
     max_diameter = sys.argv[2]
